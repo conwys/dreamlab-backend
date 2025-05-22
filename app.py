@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import uuid
 import os
 
-
 load_dotenv()
 
 sessions_dir = os.getenv("SESSIONS_DIR")
@@ -64,7 +63,6 @@ def process_image(session_id):
     except Exception as e:
         print(f"ERROR: Failed processing image because {e}")
         return jsonify({"error": "An internal error occurred while processing the image"}), 500
-
 
 # GET - Endpoint to return a list of file names for models generated. 
 # Models will be found at: ./sessions/<session_id>/models
