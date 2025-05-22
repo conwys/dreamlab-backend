@@ -1,10 +1,12 @@
 from gradio_client import Client, handle_file
+from dotenv import load_dotenv
 import os
-import time
 
-HUNYUAN_SPACE_ID = "tencent/Hunyuan3D-2"
-HUNYUAN_API_NAME = "/shape_generation"
-SESSIONS_DIR = "./sessions"
+load_dotenv()
+
+hunyuan_space_id = os.getenv("HUNYUAN_SPACE_ID")
+hunyuan_api_name = os.getenv("HUNYUAN_API_NAME")
+sessions_dir = os.getenv("SESSIONS_DIR")
 
 _hunyuan_client = None
 
@@ -13,26 +15,21 @@ def get_hunyuan_client():
 
     if _hunyuan_client is None:
         try:
-            _hunyuan_client = Client(HUNYUAN_SPACE_ID)
+            _hunyuan_client = Client(hunyuan_space_id)
         except Exception as e:
-            _hunyuan_client = False
+            _hunyuan_client = None
             raise RuntimeError(f"Failed to init Gradio Client: {e}") from e
-        
-    if _hunyuan_client is False:
-        raise RuntimeError("Gradio Client failed to init previously")
     
     return _hunyuan_client
 
 def save_generated_model(session_id, model_data, filename):
-    session_models_dir = f"./sessions/{session_id}/models"
+    session_models_dir = f"{sessions_dir}/{session_id}/models"
     file_path = os.path.join(session_models_dir, filename)
 
-    # Write 3d model data to file
     with open(file_path, "wb") as f:
         f.write(model_data)
 
-    # Construct a url string that the frontend can use to request this specific file
-    base_url = "http://localhost:5000"  # TODO: Replace with your actual base URL
+    base_url = "http://localhost:5000"
     model_url = f"{base_url}/sessions/{session_id}/models/{filename}"
     return file_path, model_url
 
@@ -42,7 +39,7 @@ def call_hunyuan_shape_generation_api(image_filepath: str, caption: str = None):
 
         result = client.predict(
             caption=caption,
-            image=image_filepath,
+            image=handle_file(image_filepath),
             steps=5,
             guidance_scale=5,
             seed=1234,
@@ -50,7 +47,19 @@ def call_hunyuan_shape_generation_api(image_filepath: str, caption: str = None):
             check_box_rembg=True,
             num_chunks=8000,
             randomize_seed=False,
-            api_name=HUNYUAN_API_NAME
+            api_name=hunyuan_api_name
         )
+
+        generated_model_filepath = result[0]["value"]
+        
+        if not generated_model_filepath or not os.path.exists(generated_model_filepath):
+            raise RuntimeError("Hunyuan API call failed or returned no model file")
+        
+        with open(generated_model_filepath, "rb") as f:
+            model_binary_data = f.read()
+
+        model_filename = os.path.basename(generated_model_filepath)
+
+        return model_binary_data, model_filename
     except Exception as e:
         raise RuntimeError(f"Failed to call Hunyuan API: {e}") from e
