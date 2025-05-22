@@ -12,8 +12,6 @@ sessions_dir = os.getenv("SESSIONS_DIR")
 
 app = Flask(__name__)
 
-print("running")
-
 # GET - Endpoint to generate a unique session ID
 # Creates a directory for the session at ./sessions/<session_id>
 @app.route("/api/generate_session_id", methods=["GET"])
