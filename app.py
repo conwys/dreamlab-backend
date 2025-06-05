@@ -4,6 +4,9 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import uuid
 import os
+from datetime import datetime
+import threading
+import time
 
 load_dotenv()
 
@@ -16,9 +19,15 @@ app = Flask(__name__)
 @app.route("/api/generate_session_id", methods=["GET"])
 def generate_session_id():
     session_id = str(uuid.uuid4())
-    os.makedirs(f"{sessions_dir}/{session_id}", exist_ok=True)
-    os.makedirs(f"{sessions_dir}/{session_id}/uploads", exist_ok=True)
-    os.makedirs(f"{sessions_dir}/{session_id}/models", exist_ok=True)
+    session_path = f"{sessions_dir}/{session_id}"
+    os.makedirs(session_path, exist_ok=True)
+    os.makedirs(f"{session_path}/uploads", exist_ok=True)
+    os.makedirs(f"{session_path}/models", exist_ok=True)
+    # Write info.txt with session info and timestamp
+    info_path = os.path.join(session_path, "info.txt")
+    with open(info_path, "w") as f:
+        f.write(f"session_id: {session_id}\n")
+        f.write(f"created_at: {datetime.utcnow().isoformat()}Z\n")
     return jsonify({
         "session_id": session_id
     }), 200
@@ -85,6 +94,36 @@ def get_session_models(session_id):
 def serve_sessions(filename):
     return send_from_directory('sessions', filename)
 
+def cleanup_expired_sessions():
+    while True:
+        now = datetime.utcnow()
+        if sessions_dir and os.path.exists(sessions_dir):
+            for session_id in os.listdir(sessions_dir):
+                session_path = os.path.join(sessions_dir, session_id)
+                info_path = os.path.join(session_path, "info.txt")
+                try:
+                    if os.path.isdir(session_path) and os.path.exists(info_path):
+                        with open(info_path, "r") as f:
+                            for line in f:
+                                if line.startswith("created_at:"):
+                                    created_at_str = line.split("created_at:")[1].strip().replace("Z", "")
+                                    created_at = datetime.fromisoformat(created_at_str)
+                                    age = (now - created_at).total_seconds()
+                                    if age > 36:
+                                        # Remove the session directory
+                                        import shutil
+                                        shutil.rmtree(session_path)
+                                        print(f"INFO: Deleted expired session: {session_id}")
+                                    break
+                except Exception as e:
+                    print(f"ERROR: Failed to check/delete session {session_id}: {e}")
+        # Sleep for 5 minutes
+        time.sleep(300)
+
+def start_cleanup_thread():
+    t = threading.Thread(target=cleanup_expired_sessions, daemon=True)
+    t.start()
 
 if __name__ == "__main__":
+    start_cleanup_thread()
     app.run(debug=True)

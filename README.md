@@ -20,7 +20,12 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
    git clone <repository-url>
    cd dreamlab-backend
    ```
-2. Install dependencies:
+2. (Recommended) Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -77,9 +82,6 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 
 ## Hunyuan3D Integration
 The backend integrates with the Hunyuan3D API for 3D model generation. The `hunyuan_service.py` file contains the logic for interacting with the API.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
 - [Flask](https://flask.palletsprojects.com/)
