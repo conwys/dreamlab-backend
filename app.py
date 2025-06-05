@@ -94,6 +94,8 @@ def get_session_models(session_id):
 def serve_sessions(filename):
     return send_from_directory('sessions', filename)
 
+# Removes expired sessions every 5 minutes.
+# Sessions expire 1 hour after creation.
 def cleanup_expired_sessions():
     while True:
         now = datetime.utcnow()
@@ -109,7 +111,7 @@ def cleanup_expired_sessions():
                                     created_at_str = line.split("created_at:")[1].strip().replace("Z", "")
                                     created_at = datetime.fromisoformat(created_at_str)
                                     age = (now - created_at).total_seconds()
-                                    if age > 36:
+                                    if age > 3600: # 1 hour in seconds
                                         # Remove the session directory
                                         import shutil
                                         shutil.rmtree(session_path)
