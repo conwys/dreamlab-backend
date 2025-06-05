@@ -39,12 +39,18 @@ def generate_session_id():
 # Uploads will be found at: ./sessions/<session_id>/uploads
 @app.route("/api/process_furniture_image/<string:session_id>", methods=["POST"])
 def process_image(session_id):
+    caption = request.form.get("caption")
 
-    if not any(f"{view}_image" in request.files and request.files[f"{view}_image"].filename != '' for view in allowed_views):
-        return jsonify({"error": "No image files provided for any view"}), 400
+    if caption:
+        print(f"INFO: Received user caption: '{caption}'")
+    else:
+        print("INFO: No user caption provided")
+
+    if "front_image" not in request.files or request.files["front_image"].filename == "":
+        return jsonify({"error": "The 'front_image' is required."}), 400
 
     session_upload_dir = os.path.join(sessions_dir, session_id, "uploads")
-    
+
     if not os.path.exists(session_upload_dir):
         return jsonify({"error": "Session_id not found"}), 404
     
@@ -53,13 +59,6 @@ def process_image(session_id):
     if not image_paths:
         return jsonify({"error": "No valid image files were uploaded"}), 400
 
-    caption = request.form.get("caption")
-
-    if caption:
-        print(f"INFO: Received user caption: '{caption}'")
-    else:
-        print("INFO: No user caption provided")
-
     try:
         model_binary_data, model_filename = call_hunyuan_shape_generation_api(
             image_filepaths=image_paths,
@@ -67,13 +66,6 @@ def process_image(session_id):
         )
 
         file_path, model_public_url = save_generated_model(session_id, model_binary_data, model_filename)
-
-        for view, path in image_paths.items():
-            try:
-                os.remove(path)
-                print(f"INFO: Cleaned up temporary {view} image file: {path}")
-            except OSError as e:
-                print(f"ERROR: Failed to remove temporary {view} image file {path}: {e}")
 
         return jsonify({
             "message": "Image saved successfully",

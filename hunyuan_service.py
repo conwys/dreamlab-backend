@@ -15,10 +15,7 @@ def get_hunyuan_client():
 
     if _hunyuan_client is None:
         try:
-            if hunyuan_space_id is not None:
-                _hunyuan_client = Client(hunyuan_space_id)
-            else:
-                raise ValueError("hunyuan_space_id must not be None")
+            _hunyuan_client = Client(hunyuan_space_id)
         except Exception as e:
             _hunyuan_client = None
             raise RuntimeError(f"Failed to init Gradio Client: {e}") from e
@@ -26,7 +23,7 @@ def get_hunyuan_client():
     return _hunyuan_client
 
 def save_generated_model(session_id, model_data, filename):
-    session_models_dir = f"{sessions_dir}/{session_id}/models"
+    session_models_dir = os.path.join(sessions_dir, session_id, "models")
     file_path = os.path.join(session_models_dir, filename)
 
     with open(file_path, "wb") as f:
@@ -50,23 +47,7 @@ def call_hunyuan_shape_generation_api(image_filepaths, caption):
             "api_name": hunyuan_api_name
         }
 
-        if len(image_filepaths) == 1:
-            print(f"INFO: Passing single image '{os.path.basename(image_filepaths["front"])}' to 'image' argument")
-            predict_args["image"] = handle_file(image_filepaths["front"])
-        elif len(image_filepaths) > 1:
-            print(f"INFO: Passing {len(image_filepaths)} images to multi-view arguments")
-            predict_args["image"] = handle_file(image_filepaths["front"])
-
-            if "front" in image_filepaths:
-                predict_args["mv_image_front"] = handle_file(image_filepaths["front"])
-            if "back" in image_filepaths:
-                predict_args["mv_image_back"] = handle_file(image_filepaths["back"])
-            if "left" in image_filepaths:
-                predict_args["mv_image_left"] = handle_file(image_filepaths["left"])
-            if "right" in image_filepaths:
-                predict_args["mv_image_right"] = handle_file(image_filepaths["right"])
-        else:
-            raise ValueError("No image file paths provided to Hunyuan API call")
+        predict_args = process_image_filepaths(image_filepaths, predict_args)
         
         result = client.predict(**predict_args)
 
@@ -83,3 +64,25 @@ def call_hunyuan_shape_generation_api(image_filepaths, caption):
         return model_binary_data, model_filename
     except Exception as e:
         raise RuntimeError(f"Failed to call Hunyuan API: {e}") from e
+
+def process_image_filepaths(image_filepaths, predict_args):
+    if not image_filepaths:
+        raise ValueError("No image file paths provided to Hunyuan API call")
+
+    front_image = image_filepaths.get("front")
+    if not front_image:
+        raise ValueError("Front image is required but not provided")
+
+    predict_args["image"] = handle_file(front_image)
+
+    if len(image_filepaths) == 1:
+        print(f"INFO: Passing single image '{os.path.basename(front_image)}' to 'image' argument")
+        return predict_args
+
+    print(f"INFO: Passing {len(image_filepaths)} images to multi-view arguments")
+
+    for view in ["front", "back", "left", "right"]:
+        if view in image_filepaths:
+            predict_args[f"mv_image_{view}"] = handle_file(image_filepaths[view])
+
+    return predict_args
