@@ -9,6 +9,8 @@ load_dotenv()
 
 sessions_dir = os.getenv("SESSIONS_DIR")
 
+allowed_views = ["front", "back", "left", "right"]
+
 app = Flask(__name__)
 
 # GET - Endpoint to generate a unique session ID
@@ -27,31 +29,44 @@ def generate_session_id():
 # Uploads will be found at: ./sessions/<session_id>/uploads
 @app.route("/api/process_furniture_image/<string:session_id>", methods=["POST"])
 def process_image(session_id):
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided"}), 400
 
-    image = request.files['image']
-    session_dir = os.path.join(sessions_dir, session_id, "uploads")
-    if not os.path.exists(session_dir):
+    if not any(f"{view}_image" in request.files and request.files[f"{view}_image"].filename != '' for view in allowed_views):
+        return jsonify({"error": "No image files provided for any view"}), 400
+
+    if sessions_dir is not None:
+        session_upload_dir = os.path.join(sessions_dir, session_id, "uploads")
+    else:
+        raise ValueError("sessions_dir must not be None")
+    
+    if not os.path.exists(session_upload_dir):
         return jsonify({"error": "Session_id not found"}), 404
+    
+    image_paths = save_and_get_image_paths(session_id, request.files)
 
-    safe_filename = secure_filename(image.filename)
-    image_file_path = os.path.join(session_dir, safe_filename)
-    image.save(image_file_path)
+    if not image_paths:
+        return jsonify({"error": "No valid image files were uploaded"}), 400
+
+    caption = request.form.get("caption")
+
+    if caption:
+        print(f"INFO: Received user caption: '{caption}'")
+    else:
+        print("INFO: No user caption provided")
 
     try:
         model_binary_data, model_filename = call_hunyuan_shape_generation_api(
-            image_filepath=image_file_path,
-            caption=f"3D model generated from {safe_filename}"
+            image_filepaths=image_paths,
+            caption=caption
         )
 
         file_path, model_public_url = save_generated_model(session_id, model_binary_data, model_filename)
 
-        try:
-            os.remove(image_file_path)
-            print(f"INFO: Cleaned up temporary image file: {image_file_path}")
-        except OSError as e:
-            print(f"ERROR: Failed to remove temporary image file {image_file_path}: {e}")
+        for view, path in image_paths.items():
+            try:
+                os.remove(path)
+                print(f"INFO: Cleaned up temporary {view} image file: {path}")
+            except OSError as e:
+                print(f"ERROR: Failed to remove temporary {view} image file {path}: {e}")
 
         return jsonify({
             "message": "Image saved successfully",
@@ -68,23 +83,48 @@ def process_image(session_id):
 # Models will be found at: ./sessions/<session_id>/models
 @app.route("/api/session_models/<string:session_id>", methods=["GET"])
 def get_session_models(session_id):
-    session_dir = os.path.join(sessions_dir, session_id, "models")
-    if not os.path.exists(session_dir):
+
+    if sessions_dir is not None:
+        session_model_dir = os.path.join(sessions_dir, session_id, "models")
+    else:
+        raise ValueError("sessions_dir must not be None")
+    
+    if not os.path.exists(session_model_dir):
         return jsonify({"error": "Session_id not found"}), 404
 
-    models = os.listdir(session_dir)
+    models = os.listdir(session_model_dir)
     return jsonify({
         "session_id": session_id,
         "models": models
     }), 200
 
-
 # This exposes all files under /sessions. 
 # So to access models, frontend simply GETs from url <base_url>/sessions/<session_id>/models/<model_filename>
 @app.route("/sessions/<path:filename>")
 def serve_sessions(filename):
-    return send_from_directory('sessions', filename)
+    return send_from_directory("sessions", filename)
 
+def save_and_get_image_paths(session_id, request_files):
+    image_paths = {}
+    if sessions_dir is not None:
+        session_upload_dir = os.path.join(sessions_dir, session_id, "uploads")
+    else:
+        raise ValueError("sessions_dir must not be None")
+
+    for view in allowed_views:
+        file_key = f"{view}_image"
+
+        if file_key in request_files and request_files[file_key].filename != "":
+            image = request_files[file_key]
+            safe_filename = secure_filename(image.filename)
+            image_file_path = os.path.join(session_upload_dir, safe_filename)
+            image.save(image_file_path)
+            image_paths[view] = image_file_path
+            print(f"INFO: Saved {view} image to {image_file_path}")
+        else:
+            print(f"INFO: No {view} image provided for session {session_id}")
+
+    return image_paths
 
 if __name__ == "__main__":
     app.run(debug=True)
