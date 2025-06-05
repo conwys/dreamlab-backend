@@ -14,13 +14,37 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 - Flask
 - Gradio Client
 
+## Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```
+HUNYUAN_SPACE_ID=
+HUNYUAN_API_NAME=
+SESSIONS_DIR=./sessions
+
+SESSION_EXPIRE_SLEEP_TIME=300 #5mins
+SESSION_EXPIRE_REMOVE_TIME=3600 #1 hour
+```
+
+- `HUNYUAN_SPACE_ID`: Your Hunyuan3D HuggingFace Space ID.
+- `HUNYUAN_API_NAME`: The API name for Hunyuan3D.
+- `SESSIONS_DIR`: Directory to store session data (default: `./sessions`).
+- `SESSION_EXPIRE_SLEEP_TIME`: Interval (in seconds) between session cleanup checks (default: `300`).
+- `SESSION_EXPIRE_REMOVE_TIME`: Session expiration time (in seconds)(default: `3600`).
+
 ## Installation
 1. Clone the repository:
    ```bash
    git clone <repository-url>
    cd dreamlab-backend
    ```
-2. Install dependencies:
+2. (Recommended) Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
@@ -77,9 +101,6 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 
 ## Hunyuan3D Integration
 The backend integrates with the Hunyuan3D API for 3D model generation. The `hunyuan_service.py` file contains the logic for interacting with the API.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgments
 - [Flask](https://flask.palletsprojects.com/)
