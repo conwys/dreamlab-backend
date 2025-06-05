@@ -14,6 +14,25 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 - Flask
 - Gradio Client
 
+## Environment Variables
+
+Create a `.env` file in the project root with the following variables:
+
+```
+HUNYUAN_SPACE_ID=
+HUNYUAN_API_NAME=
+SESSIONS_DIR=./sessions
+
+SESSION_EXPIRE_SLEEP_TIME=300 #5mins
+SESSION_EXPIRE_REMOVE_TIME=3600 #1 hour
+```
+
+- `HUNYUAN_SPACE_ID`: Your Hunyuan3D HuggingFace Space ID.
+- `HUNYUAN_API_NAME`: The API name for Hunyuan3D.
+- `SESSIONS_DIR`: Directory to store session data (default: `./sessions`).
+- `SESSION_EXPIRE_SLEEP_TIME`: Interval (in seconds) between session cleanup checks (default: `300`).
+- `SESSION_EXPIRE_REMOVE_TIME`: Session expiration time (in seconds)(default: `3600`).
+
 ## Installation
 1. Clone the repository:
    ```bash

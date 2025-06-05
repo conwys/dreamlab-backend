@@ -4,9 +4,10 @@ from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import uuid
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import threading
 import time
+import shutil
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ def generate_session_id():
     info_path = os.path.join(session_path, "info.txt")
     with open(info_path, "w") as f:
         f.write(f"session_id: {session_id}\n")
-        f.write(f"created_at: {datetime.utcnow().isoformat()}Z\n")
+        f.write(f"created_at: {datetime.now(timezone.utc).isoformat()}\n")
     return jsonify({
         "session_id": session_id
     }), 200
@@ -98,7 +99,7 @@ def serve_sessions(filename):
 # Sessions expire 1 hour after creation.
 def cleanup_expired_sessions():
     while True:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if sessions_dir and os.path.exists(sessions_dir):
             for session_id in os.listdir(sessions_dir):
                 session_path = os.path.join(sessions_dir, session_id)
@@ -108,19 +109,18 @@ def cleanup_expired_sessions():
                         with open(info_path, "r") as f:
                             for line in f:
                                 if line.startswith("created_at:"):
-                                    created_at_str = line.split("created_at:")[1].strip().replace("Z", "")
+                                    created_at_str = line.split("created_at:")[1].strip()
                                     created_at = datetime.fromisoformat(created_at_str)
                                     age = (now - created_at).total_seconds()
-                                    if age > 3600: # 1 hour in seconds
-                                        # Remove the session directory
-                                        import shutil
+                                    if age > int(os.getenv('SESSION_EXPIRE_REMOVE_TIME')):
+                                        # Remove the session directory                                        
                                         shutil.rmtree(session_path)
                                         print(f"INFO: Deleted expired session: {session_id}")
                                     break
                 except Exception as e:
                     print(f"ERROR: Failed to check/delete session {session_id}: {e}")
         # Sleep for 5 minutes
-        time.sleep(300)
+        time.sleep(int(os.getenv('SESSION_EXPIRE_SLEEP_TIME')) or 300)
 
 def start_cleanup_thread():
     t = threading.Thread(target=cleanup_expired_sessions, daemon=True)
