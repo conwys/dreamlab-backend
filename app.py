@@ -42,9 +42,7 @@ def _write_session_info(session_path: str, session_id: str) -> None:
 
 
 def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
-    """
-    Saves uploaded images for a given session and returns a dictionary of saved image paths
-    """
+    """Saves uploaded images for a given session and returns a dictionary of saved image paths"""
     image_paths = {}
     session_upload_dir = os.path.join(SESSIONS_DIR, session_id, "uploads")
 
@@ -69,9 +67,7 @@ def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
 
 
 def cleanup_expired_sessions() -> None:
-    """
-    Periodically removes session directories that have expired based on their creation timestamp
-    """
+    """Periodically removes session directories that have expired based on their creation timestamp"""
     while True:
         now = datetime.now(timezone.utc)
         if not os.path.exists(SESSIONS_DIR):
