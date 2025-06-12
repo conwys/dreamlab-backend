@@ -1,5 +1,6 @@
 from hunyuan_service import call_hunyuan_shape_generation_api, save_generated_model
 from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 import uuid
@@ -16,6 +17,7 @@ sessions_dir = os.getenv("SESSIONS_DIR")
 allowed_views = ["front", "back", "left", "right"]
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:4200"])
 
 # GET - Endpoint to generate a unique session ID
 # Creates a directory for the session at ./sessions/<session_id>
