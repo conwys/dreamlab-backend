@@ -2,7 +2,6 @@ import os
 import uuid
 
 from flask import jsonify, request, current_app, send_from_directory
-from werkzeug.utils import secure_filename
 
 from . import api_bp
 from hunyuan_service import call_hunyuan_shape_generation_api, save_generated_model
