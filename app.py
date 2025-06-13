@@ -4,6 +4,7 @@ import logging
 
 from dotenv import load_dotenv
 from flask import Flask, current_app
+from flask_cors import CORS
 
 from config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
 from utils.session_helpers import cleanup_expired_sessions
@@ -17,6 +18,8 @@ def create_app(config_class=Config):
 
     app = Flask(__name__)
     app.config.from_object(config_class)
+
+    CORS(app, origins=["http://localhost:4200"]) # TODO
 
     logging.basicConfig(level=logging.INFO)
 
