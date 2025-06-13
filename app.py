@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
 from hunyuan_service import call_hunyuan_shape_generation_api, save_generated_model
@@ -21,6 +22,7 @@ SESSION_EXPIRE_REMOVE_SECONDS = int(os.getenv('SESSION_EXPIRE_REMOVE_TIME', 3600
 SESSION_CLEANUP_INTERVAL_SECONDS = int(os.getenv('SESSION_EXPIRE_SLEEP_TIME', 300))
 
 app = Flask(__name__)
+CORS(app, origins=["http://localhost:4200"])
 
 
 # Helper functions
