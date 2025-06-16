@@ -3,7 +3,7 @@ import shutil
 import time
 from datetime import datetime, timezone
 
-from flask import current_app
+from flask import Flask, current_app
 from werkzeug.utils import secure_filename
 
 
@@ -74,7 +74,7 @@ def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
     return image_paths
 
 
-def cleanup_expired_sessions(sessions_dir: str, expire_seconds: int, cleanup_interval: int) -> None:
+def cleanup_expired_sessions(app: Flask, sessions_dir: str, expire_seconds: int, cleanup_interval: int) -> None:
     """
     Periodically removes session directories that have expired based on their creation timestamp
     This function is intended to run in a separate thread
@@ -84,39 +84,40 @@ def cleanup_expired_sessions(sessions_dir: str, expire_seconds: int, cleanup_int
         expire_seconds (int): The number of seconds after which a session is considered expired
         cleanup_interval (int): The time in seconds to wait between cleanup scans
     """
-    while True:
-        now = datetime.now(timezone.utc)
-        if not os.path.exists(sessions_dir):
-            current_app.logger.warning(f"Sessions directory not found: {sessions_dir}. Waiting for it to appear")
-            time.sleep(cleanup_interval)
-            continue
-
-        for session_id in os.listdir(sessions_dir):
-            session_path = os.path.join(sessions_dir, session_id)
-            info_path = os.path.join(session_path, "info.txt")
-
-            if not os.path.isdir(session_path) or not os.path.exists(info_path):
-                current_app.logger.debug(f"Skipping non-session directory or missing info.txt: {session_path}")
+    with app.app_context():
+        while True:
+            now = datetime.now(timezone.utc)
+            if not os.path.exists(sessions_dir):
+                current_app.logger.warning(f"Sessions directory not found: {sessions_dir}. Waiting for it to appear")
+                time.sleep(cleanup_interval)
                 continue
 
-            try:
-                created_at = None
-                with open(info_path, "r") as f:
-                    for line in f:
-                        if line.startswith("created_at:"):
-                            created_at_str = line.split("created_at:")[1].strip()
-                            created_at = datetime.fromisoformat(created_at_str)
-                            break
+            for session_id in os.listdir(sessions_dir):
+                session_path = os.path.join(sessions_dir, session_id)
+                info_path = os.path.join(session_path, "info.txt")
 
-                if created_at:
-                    age = (now - created_at).total_seconds()
-                    if age > expire_seconds:
-                        shutil.rmtree(session_path)
-                        current_app.logger.info(f"Deleted expired session: {session_id} (age: {age:.0f}s)")
-                else:
-                    current_app.logger.warning(f"Could not find 'created_at' in info.txt for session: {session_id}. Skipping cleanup")
+                if not os.path.isdir(session_path) or not os.path.exists(info_path):
+                    current_app.logger.debug(f"Skipping non-session directory or missing info.txt: {session_path}")
+                    continue
 
-            except Exception as e:
-                current_app.logger.error(f"Failed to check/delete session {session_id}: {e}")
+                try:
+                    created_at = None
+                    with open(info_path, "r") as f:
+                        for line in f:
+                            if line.startswith("created_at:"):
+                                created_at_str = line.split("created_at:")[1].strip()
+                                created_at = datetime.fromisoformat(created_at_str)
+                                break
 
-        time.sleep(cleanup_interval)
+                    if created_at:
+                        age = (now - created_at).total_seconds()
+                        if age > expire_seconds:
+                            shutil.rmtree(session_path)
+                            current_app.logger.info(f"Deleted expired session: {session_id} (age: {age:.0f}s)")
+                    else:
+                        current_app.logger.warning(f"Could not find 'created_at' in info.txt for session: {session_id}. Skipping cleanup")
+
+                except Exception as e:
+                    current_app.logger.error(f"Failed to check/delete session {session_id}: {e}")
+
+            time.sleep(cleanup_interval)

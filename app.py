@@ -3,7 +3,7 @@ import threading
 import logging
 
 from dotenv import load_dotenv
-from flask import Flask, current_app
+from flask import Flask
 from flask_cors import CORS
 
 from config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
@@ -38,6 +38,7 @@ if __name__ == "__main__":
         cleanup_thread = threading.Thread(
             target=cleanup_expired_sessions,
             args=(
+                app_instance,
                 app_instance.config["SESSIONS_DIR"],
                 app_instance.config["SESSION_EXPIRE_REMOVE_SECONDS"],
                 app_instance.config["SESSION_CLEANUP_INTERVAL_SECONDS"]

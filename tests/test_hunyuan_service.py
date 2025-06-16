@@ -24,7 +24,6 @@ def cleanup_hunyuan_client_singleton(monkeypatch):
 def test_get_hunyuan_client_initialisation(MockClient):
     """Test the client initialises"""
     mock_space_id = "test_space_id"
-    mock_instance = MockClient.return_value
 
     client = get_hunyuan_client(mock_space_id)
 
@@ -36,7 +35,6 @@ def test_get_hunyuan_client_initialisation(MockClient):
 def test_get_hunyuan_client_singleton(MockClient):
     """Test that subsequent calls return the same client instance"""
     mock_space_id = "test_space_id"
-    mock_instance = MockClient.return_value
 
     client1 = get_hunyuan_client(mock_space_id)
     client2 = get_hunyuan_client(mock_space_id)
