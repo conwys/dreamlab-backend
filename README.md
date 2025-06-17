@@ -35,26 +35,33 @@ SESSION_EXPIRE_REMOVE_TIME=3600 #1 hour
 
 ## Installation
 1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd dreamlab-backend
-   ```
-2. (Recommended) Create and activate a virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
-   ```
+  ```bash
+  git clone <repository-url>
+  cd dreamlab-backend
+  ```
+2. Create and activate a virtual environment:
+  ```bash
+  python3 -m venv venv
+  source venv/bin/activate  # On Windows use: venv\Scripts\activate
+  ```
 3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+  ```bash
+  pip install -r requirements.txt
+  ```
 
 ## Usage
 1. Start the Flask server:
-   ```bash
-   python app.py
-   ```
+  ```bash
+  python app.py
+  ```
 2. Access the API at `http://127.0.0.1:5000`.
+
+## Run Tests
+1. Ensure virtual environment and dependencies are setup
+2. Run the pytests for the project:
+  ```bash
+  pytest
+  ```
 
 ## API Endpoints
 ### 1. Generate Session ID
