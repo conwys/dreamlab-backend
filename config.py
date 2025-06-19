@@ -3,14 +3,17 @@ import os
 
 class Config:
     """Base configuration class"""
-    DEBUG = False
-    TESTING = False
-    SECRET_KEY = os.environ.get("SECRET_KEY", "your_development_secret_key")
+
+    FLASK_ENV = os.environ.get("FLASK_ENV", "development")
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:4200")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "default-dev-secret")
+
+    LOG_LEVEL = "INFO"
 
     # Session management
-    SESSIONS_DIR = os.environ.get("SESSIONS_DIR", "sessions")
-    SESSION_EXPIRE_REMOVE_SECONDS = int(os.environ.get('SESSION_EXPIRE_REMOVE_TIME', 3600))
-    SESSION_CLEANUP_INTERVAL_SECONDS = int(os.environ.get('SESSION_EXPIRE_SLEEP_TIME', 300))
+    SESSIONS_DIR = os.path.join(os.getcwd(), "sessions")
+    SESSION_EXPIRE_REMOVE_SECONDS = 3600
+    SESSION_CLEANUP_INTERVAL_SECONDS = 600
 
     # Hunyuan service configuration
     HUNYUAN_SPACE_ID = os.environ.get("HUNYUAN_SPACE_ID")
@@ -23,22 +26,31 @@ class Config:
 
 class DevelopmentConfig(Config):
     """Development configuration"""
+
     DEBUG = True
-    TESTING = True
+    ENV = "development"
+    LOG_LEVEL = "DEBUG"
 
 
 class TestingConfig(Config):
     """Testing configuration"""
+
     TESTING = True
-    SESSIONS_DIR = "test_sessions"
+    DEBUG = True
+    ENV = "testing"
+    LOG_LEVEL = "DEBUG"
+
+    # Session management
+    SESSIONS_DIR = os.path.join(os.getcwd(), "test_sessions")
     # Ensure background cleanup is not started
     SESSION_CLEANUP_INTERVAL_SECONDS = 0
     SESSION_EXPIRE_REMOVE_SECONDS = 0
 
-# TODO
+
 class ProductionConfig(Config):
     """Production configuration"""
-    pass
-    # DEBUG = False
-    # TESTING = False
-    # Further specific production settings
+
+    DEBUG = False
+    ENV = "production"
+    LOG_LEVEL = "ERROR"
+    CORS_ORIGINS = os.environ.get("CORS_ORIGINS")

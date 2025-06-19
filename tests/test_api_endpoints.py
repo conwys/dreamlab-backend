@@ -1,10 +1,11 @@
-import pytest
-import os
 import json
+import os
 import shutil
-from unittest.mock import patch, MagicMock
-from flask import Response
 from io import BytesIO
+from unittest.mock import MagicMock, patch
+
+import pytest
+from flask import Response
 from werkzeug.datastructures import FileStorage
 
 from app import create_app
@@ -15,6 +16,7 @@ from config import TestingConfig
 @pytest.fixture
 def app():
     """Create and configure a new app instance for each test"""
+
     class CustomTestingConfig(TestingConfig):
         SESSIONS_DIR = "test_sessions_tmp"
         HUNYUAN_SPACE_ID = "test_space"
@@ -55,8 +57,9 @@ def mock_image_file():
     return FileStorage(
         stream=BytesIO(b"fake image data"),
         filename="test_image.jpg",
-        content_type="image/jpeg"
+        content_type="image/jpeg",
     )
+
 
 @pytest.fixture
 def mock_side_image_file():
@@ -64,29 +67,35 @@ def mock_side_image_file():
     return FileStorage(
         stream=BytesIO(b"fake side image data"),
         filename="test_side.jpg",
-        content_type="image/jpeg"
+        content_type="image/jpeg",
     )
 
 
 # Tests for /api/generate_session_id endpoint
 @patch("api.routes._create_session_directories")
 @patch("api.routes._write_session_info")
-def test_generate_session_id_success(mock_write_session_info, mock_create_session_directories, client):
+def test_generate_session_id_success(
+    mock_write_session_info, mock_create_session_directories, client
+):
     """Test successful generation of session ID and directory creation"""
     response = client.get("/api/generate_session_id")
     data = json.loads(response.data)
 
     assert response.status_code == 200
     assert "session_id" in data
-    assert len(data["session_id"]) == 36 # UUID format
+    assert len(data["session_id"]) == 36  # UUID format
 
-    session_path = os.path.join(client.application.config["SESSIONS_DIR"], data["session_id"])
+    session_path = os.path.join(
+        client.application.config["SESSIONS_DIR"], data["session_id"]
+    )
     mock_create_session_directories.assert_called_once_with(session_path)
     mock_write_session_info.assert_called_once_with(session_path, data["session_id"])
 
 
 @patch("api.routes._create_session_directories", side_effect=OSError("Disk full"))
-def test_generate_session_id_dir_creation_failure(mock_create_session_directories_fail, client):
+def test_generate_session_id_dir_creation_failure(
+    mock_create_session_directories_fail, client
+):
     """Test error handling when session directory creation fails"""
     response = client.get("/api/generate_session_id")
     data = json.loads(response.data)
@@ -108,32 +117,34 @@ def test_process_image_success_single_image(
     session_id = "test_session_single"
     session_dir = os.path.join(app.config["SESSIONS_DIR"], session_id)
     os.makedirs(session_dir, exist_ok=True)
-    
+
     mock_save_paths.return_value = ["/path/to/front.jpg"]
     mock_call_api.return_value = (b"mock_model_data", "generated_model.glb")
     mock_save_model.return_value = (
         f"{session_dir}/models/generated_model.glb",
-        f"{app.config['APP_BASE_URL']}/sessions/{session_id}/models/generated_model.glb"
+        f"{app.config['APP_BASE_URL']}/sessions/{session_id}/models/generated_model.glb",
     )
 
     response = client.post(
         f"/api/process_furniture_image/{session_id}",
         data={"caption": "A single chair", "front_image": mock_image_file},
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
     assert response.status_code == 200
     assert data["message"] == "Image processed and model generated successfully"
     assert data["filename"] == "generated_model.glb"
-    assert data["model_url"].endswith(f"/sessions/{session_id}/models/generated_model.glb")
+    assert data["model_url"].endswith(
+        f"/sessions/{session_id}/models/generated_model.glb"
+    )
     mock_save_paths.assert_called_once()
     mock_call_api.assert_called_once_with(
         image_filepaths=["/path/to/front.jpg"],
         caption="A single chair",
         hunyuan_space_id=app.config["HUNYUAN_SPACE_ID"],
         hunyuan_api_name=app.config["HUNYUAN_API_NAME"],
-        allowed_views=app.config["ALLOWED_VIEWS"]
+        allowed_views=app.config["ALLOWED_VIEWS"],
     )
     mock_save_model.assert_called_once()
 
@@ -142,7 +153,13 @@ def test_process_image_success_single_image(
 @patch("api.routes.call_hunyuan_shape_generation_api")
 @patch("api.routes._save_and_get_image_paths")
 def test_process_image_success_multiple_images(
-    mock_save_paths, mock_call_api, mock_save_model, client, app, mock_image_file, mock_side_image_file
+    mock_save_paths,
+    mock_call_api,
+    mock_save_model,
+    client,
+    app,
+    mock_image_file,
+    mock_side_image_file,
 ):
     """Test successful image processing with multiple images (front and side)"""
     session_id = "test_session_multi"
@@ -154,7 +171,7 @@ def test_process_image_success_multiple_images(
     mock_call_api.return_value = (b"mock_model_data_multi", "multi_view_model.glb")
     mock_save_model.return_value = (
         f"{session_dir}/models/multi_view_model.glb",
-        f"{app.config['APP_BASE_URL']}/sessions/{session_id}/models/multi_view_model.glb"
+        f"{app.config['APP_BASE_URL']}/sessions/{session_id}/models/multi_view_model.glb",
     )
 
     response = client.post(
@@ -164,7 +181,7 @@ def test_process_image_success_multiple_images(
             "front_image": mock_image_file,
             "side_image": mock_side_image_file,
         },
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
@@ -175,13 +192,17 @@ def test_process_image_success_multiple_images(
         caption="A chair with multiple views",
         hunyuan_space_id=app.config["HUNYUAN_SPACE_ID"],
         hunyuan_api_name=app.config["HUNYUAN_API_NAME"],
-        allowed_views=app.config["ALLOWED_VIEWS"]
+        allowed_views=app.config["ALLOWED_VIEWS"],
     )
 
 
-@patch("api.routes.call_hunyuan_shape_generation_api", side_effect=Exception("API Error"))
+@patch(
+    "api.routes.call_hunyuan_shape_generation_api", side_effect=Exception("API Error")
+)
 @patch("api.routes._save_and_get_image_paths", return_value=["/path/to/front.jpg"])
-def test_process_image_api_failure(mock_save_paths, mock_call_api, client, app, mock_image_file):
+def test_process_image_api_failure(
+    mock_save_paths, mock_call_api, client, app, mock_image_file
+):
     """Test failure when the external Hunyuan API call raises an exception"""
     session_id = "test_session_api_fail"
     os.makedirs(os.path.join(app.config["SESSIONS_DIR"], session_id), exist_ok=True)
@@ -189,7 +210,7 @@ def test_process_image_api_failure(mock_save_paths, mock_call_api, client, app, 
     response = client.post(
         f"/api/process_furniture_image/{session_id}",
         data={"front_image": mock_image_file},
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
@@ -203,12 +224,13 @@ def test_process_image_session_not_found(client, mock_image_file):
     response = client.post(
         "/api/process_furniture_image/non_existent_session",
         data={"front_image": mock_image_file},
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
     assert response.status_code == 404
     assert data["error"] == "Session ID not found"
+
 
 def test_process_image_no_front_image(client, app):
     """Test error when the required 'front_image' is missing from the request"""
@@ -217,8 +239,8 @@ def test_process_image_no_front_image(client, app):
 
     response = client.post(
         f"/api/process_furniture_image/{session_id}",
-        data={"caption": "This request will fail"}, # No files
-        content_type="multipart/form-data"
+        data={"caption": "This request will fail"},  # No files
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
@@ -227,7 +249,9 @@ def test_process_image_no_front_image(client, app):
 
 
 @patch("api.routes._save_and_get_image_paths", return_value=[])
-def test_process_image_no_valid_image_uploaded(mock_save_paths, client, app, mock_image_file):
+def test_process_image_no_valid_image_uploaded(
+    mock_save_paths, client, app, mock_image_file
+):
     """Test error when _save_and_get_image_paths returns an empty list"""
     session_id = "test_session_no_valid_img"
     os.makedirs(os.path.join(app.config["SESSIONS_DIR"], session_id), exist_ok=True)
@@ -235,7 +259,7 @@ def test_process_image_no_valid_image_uploaded(mock_save_paths, client, app, moc
     response = client.post(
         f"/api/process_furniture_image/{session_id}",
         data={"front_image": mock_image_file},
-        content_type="multipart/form-data"
+        content_type="multipart/form-data",
     )
     data = json.loads(response.data)
 
@@ -252,7 +276,7 @@ def test_get_session_models_success(mock_listdir, client):
     sessions_dir = client.application.config["SESSIONS_DIR"]
     session_path = os.path.join(sessions_dir, session_id)
     session_models_dir = os.path.join(session_path, "models")
-    
+
     os.makedirs(session_models_dir, exist_ok=True)
 
     response = client.get(f"/api/session_models/{session_id}")
@@ -274,7 +298,11 @@ def test_get_session_models_session_not_found(mock_exists, client):
     assert response.status_code == 404
     assert "error" in data
     assert data["error"] == "Session ID not found or models directory missing"
-    mock_exists.assert_called_once_with(os.path.join(client.application.config["SESSIONS_DIR"], "non_existent_session", "models"))
+    mock_exists.assert_called_once_with(
+        os.path.join(
+            client.application.config["SESSIONS_DIR"], "non_existent_session", "models"
+        )
+    )
 
 
 # Tests for /sessions/<path:filename> static file serving
@@ -287,9 +315,7 @@ def test_serve_sessions(mock_send_from_directory, client):
     mock_response_mimetype = "image/png"
 
     flask_response_object = Response(
-        mock_response_content,
-        mimetype=mock_response_mimetype,
-        status=200
+        mock_response_content, mimetype=mock_response_mimetype, status=200
     )
 
     mock_send_from_directory.return_value = flask_response_object
@@ -300,4 +326,6 @@ def test_serve_sessions(mock_send_from_directory, client):
     assert response.data == mock_response_content
     assert response.mimetype == mock_response_mimetype
 
-    mock_send_from_directory.assert_called_once_with(client.application.config["SESSIONS_DIR"], filename)
+    mock_send_from_directory.assert_called_once_with(
+        client.application.config["SESSIONS_DIR"], filename
+    )
