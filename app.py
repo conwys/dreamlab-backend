@@ -19,7 +19,7 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    CORS(app, origins=["http://localhost:4200"]) # TODO
+    CORS(app, origins=["http://localhost:4200", "https://dreamlab-backend-nov5.onrender.com"])
 
     logging.basicConfig(level=logging.INFO)
 
