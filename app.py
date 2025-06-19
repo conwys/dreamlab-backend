@@ -33,7 +33,7 @@ def create_app():
 
     cors_origins = app.config.get("CORS_ORIGINS")
 
-    CORS(app, origins=cors_origins, supports_credentials=True)
+    CORS(app, origins=cors_origins)
 
     logging.basicConfig(
         level=getattr(logging, app.config.get("LOG_LEVEL", "INFO").upper())
