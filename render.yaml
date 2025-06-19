@@ -8,9 +8,9 @@ services:
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: "https://your-frontend-domain.com"
+        value: "https://dreamlabmku.netlify.app/"
       - key: APP_BASE_URL
-        value: "https://your-backend-domain.com"
+        value: "https://dreamlab-backend-nov5.onrender.com"
       - key: SECRET_KEY
         generateValue: true
         sync: false
