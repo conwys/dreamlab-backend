@@ -1,1 +1,2 @@
 -r base.txt
+waitress==3.0.2
