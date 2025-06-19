@@ -33,7 +33,7 @@ def create_app():
     CORS(app, origins=cors_origins) # is support credentials needed
 
     logging.basicConfig(level=getattr(logging, app.config.get("LOG_LEVEL", "INFO").upper()))
-    app.logger.info(f"App running in {app.config["ENV"]} environment with log level {app.config["LOG_LEVEL"]}")
+    app.logger.info(f"App running in {app.config['ENV']} environment with log level {app.config['LOG_LEVEL']}")
 
     from api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     if app_instance.config.get("SESSIONS_DIR"):
         os.makedirs(app_instance.config["SESSIONS_DIR"], exist_ok=True)
-        app_instance.logger.info(f"Session directory: {app_instance.config["SESSIONS_DIR"]}")
+        app_instance.logger.info(f"Session directory: {app_instance.config['SESSIONS_DIR']}")
 
         cleanup_thread = threading.Thread(
             target=cleanup_expired_sessions,
