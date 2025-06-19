@@ -10,13 +10,13 @@ from config import Config, DevelopmentConfig, TestingConfig, ProductionConfig
 from utils.session_helpers import cleanup_expired_sessions
 
 
-def create_app(config_class=Config):
+def create_app():
     """
     Creates and configures the Flask application instance
     """
     load_dotenv()  # Load .env variables when app is created (e.g., for local dev)
 
-    env = app.config.get("FLASK_ENV")
+    env = os.environ.get("FLASK_ENV")
 
     if env == "production":
         config_class = ProductionConfig
@@ -32,7 +32,7 @@ def create_app(config_class=Config):
 
     CORS(app, origins=cors_origins) # is support credentials needed
 
-    logging.basicConfig(level=getattr(logging, app.config.get("LOG_LEVEL").upper()))
+    logging.basicConfig(level=getattr(logging, app.config.get("LOG_LEVEL", "INFO").upper()))
     app.logger.info(f"App running in {app.config["ENV"]} environment with log level {app.config["LOG_LEVEL"]}")
 
     from api import api_bp

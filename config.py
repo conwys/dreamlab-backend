@@ -5,6 +5,8 @@ class Config:
     """Base configuration class"""
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:4200")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "default-dev-secret")
+    
     LOG_LEVEL = "INFO"
 
     # Session management

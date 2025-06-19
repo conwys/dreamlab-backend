@@ -19,17 +19,10 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 Create a `.env` file in the project root with the following variables:
 
 ```
-FLASK_ENV=development
-CORS_ORIGINS=http://localhost:4200
-APP_BASE_URL=http://localhost:5000
-
 HUNYUAN_SPACE_ID=
 HUNYUAN_API_NAME=
 
 ```
-- `FLASK_ENV`: The environment mode in which the Flask app runs.
-- `CORS_ORIGINS`: The allowed origins for CORS.
-- `APP_BASE_URL`: The base URL where the Flask application is hosted.
 - `HUNYUAN_SPACE_ID`: Your Hunyuan3D HuggingFace Space ID.
 - `HUNYUAN_API_NAME`: The API name for Hunyuan3D.
 

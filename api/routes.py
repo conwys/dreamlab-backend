@@ -113,7 +113,7 @@ def get_session_models(session_id: str):
         return jsonify({"error": "An internal error occurred while retrieving models"}), 500
 
 
-@api_bp.route("/sessions/<path:filename>")
+@api_bp.route("/sessions/<path:filename>", methods=["GET"])
 def serve_sessions(filename: str):
     """
     Serves static files (e.g., uploaded images, generated 3D models) from session directories
@@ -136,3 +136,8 @@ def serve_sessions(filename: str):
     except Exception as e:
         current_app.logger.error(f"Error serving file {filename} from {sessions_dir}: {e}")
         return "File not found or access denied", 404
+    
+
+@api_bp.route('/health', methods=["GET"])
+def health_check():
+    return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}

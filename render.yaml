@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: dreamlab-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py
+    runtime: python
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: "https://your-frontend-domain.com"
+      - key: APP_BASE_URL
+        value: "https://your-backend-domain.com"
+      - key: SECRET_KEY
+        generateValue: true
+        sync: false
+      - key: HUNYUAN_SPACE_ID
+        value: ${HUNYUAN_SPACE_ID}
+      - key: HUNYUAN_API_NAME
+        value: ${HUNYUAN_API_NAME}
