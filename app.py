@@ -28,7 +28,8 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    cors_origins = app.config.get("CORS_ORIGINS")
+    # cors_origins = app.config.get("CORS_ORIGINS")
+    cors_origins = ["https://dreamlab-backend-nov5.onrender.com"]
 
     app.logger.info(f"CORS origins: {cors_origins}") # removeapp.logger.info(f"CORS origins: {cors_origins}")
 
