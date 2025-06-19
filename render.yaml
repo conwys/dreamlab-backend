@@ -2,7 +2,7 @@ services:
   - type: web
     name: dreamlab-backend
     buildCommand: pip install -r requirements/prod.txt
-    startCommand: python app.py
+    startCommand: waitress-serve --port=$PORT app:app
     runtime: python
     envVars:
       - key: FLASK_ENV
