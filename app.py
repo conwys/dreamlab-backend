@@ -31,7 +31,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    cors_origins = app.config.get("CORS_ORIGINS")
+    cors_origins = app.config.get("CORS_ORIGINS", supports_credentials=True)
 
     CORS(app, origins=cors_origins)
 
