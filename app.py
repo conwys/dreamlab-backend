@@ -31,9 +31,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    cors_origins = app.config.get("CORS_ORIGINS", supports_credentials=True)
+    cors_origins = app.config.get("CORS_ORIGINS")
 
-    CORS(app, origins=cors_origins)
+    CORS(app, origins=cors_origins, supports_credentials=True)
 
     logging.basicConfig(
         level=getattr(logging, app.config.get("LOG_LEVEL", "INFO").upper())
