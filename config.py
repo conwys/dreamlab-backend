@@ -3,10 +3,11 @@ import os
 
 class Config:
     """Base configuration class"""
+
     FLASK_ENV = os.environ.get("FLASK_ENV", "development")
     CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "http://localhost:4200")
     SECRET_KEY = os.environ.get("SECRET_KEY", "default-dev-secret")
-    
+
     LOG_LEVEL = "INFO"
 
     # Session management
@@ -25,6 +26,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     """Development configuration"""
+
     DEBUG = True
     ENV = "development"
     LOG_LEVEL = "DEBUG"
@@ -32,6 +34,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     """Testing configuration"""
+
     TESTING = True
     DEBUG = True
     ENV = "testing"
@@ -46,6 +49,7 @@ class TestingConfig(Config):
 
 class ProductionConfig(Config):
     """Production configuration"""
+
     DEBUG = False
     ENV = "production"
     LOG_LEVEL = "ERROR"

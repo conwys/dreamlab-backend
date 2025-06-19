@@ -42,15 +42,21 @@ def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
         Returns an empty dict if no valid images were uploaded or the session directory doesn't exist
     """
     image_paths = {}
-    session_upload_dir = os.path.join(current_app.config["SESSIONS_DIR"], session_id, "uploads")
+    session_upload_dir = os.path.join(
+        current_app.config["SESSIONS_DIR"], session_id, "uploads"
+    )
 
     if not os.path.exists(session_upload_dir):
-        current_app.logger.error(f"Upload directory not found for session {session_id}: {session_upload_dir}")
+        current_app.logger.error(
+            f"Upload directory not found for session {session_id}: {session_upload_dir}"
+        )
         return {}
 
     allowed_views = current_app.config.get("ALLOWED_VIEWS", [])
     if not allowed_views:
-        current_app.logger.warning("ALLOWED_VIEWS is not configured in app.config. No images will be saved")
+        current_app.logger.warning(
+            "ALLOWED_VIEWS is not configured in app.config. No images will be saved"
+        )
         return {}
 
     found_any_image = False
@@ -66,7 +72,9 @@ def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
             current_app.logger.info(f"Saved {view} image to {image_file_path}")
             found_any_image = True
         else:
-            current_app.logger.info(f"No {view} image provided for session {session_id}")
+            current_app.logger.info(
+                f"No {view} image provided for session {session_id}"
+            )
 
     if not found_any_image:
         return {}
@@ -74,7 +82,9 @@ def _save_and_get_image_paths(session_id: str, request_files: dict) -> dict:
     return image_paths
 
 
-def cleanup_expired_sessions(app: Flask, sessions_dir: str, expire_seconds: int, cleanup_interval: int) -> None:
+def cleanup_expired_sessions(
+    app: Flask, sessions_dir: str, expire_seconds: int, cleanup_interval: int
+) -> None:
     """
     Periodically removes session directories that have expired based on their creation timestamp
     This function is intended to run in a separate thread
@@ -88,7 +98,9 @@ def cleanup_expired_sessions(app: Flask, sessions_dir: str, expire_seconds: int,
         while True:
             now = datetime.now(timezone.utc)
             if not os.path.exists(sessions_dir):
-                current_app.logger.warning(f"Sessions directory not found: {sessions_dir}. Waiting for it to appear")
+                current_app.logger.warning(
+                    f"Sessions directory not found: {sessions_dir}. Waiting for it to appear"
+                )
                 time.sleep(cleanup_interval)
                 continue
 
@@ -97,7 +109,9 @@ def cleanup_expired_sessions(app: Flask, sessions_dir: str, expire_seconds: int,
                 info_path = os.path.join(session_path, "info.txt")
 
                 if not os.path.isdir(session_path) or not os.path.exists(info_path):
-                    current_app.logger.debug(f"Skipping non-session directory or missing info.txt: {session_path}")
+                    current_app.logger.debug(
+                        f"Skipping non-session directory or missing info.txt: {session_path}"
+                    )
                     continue
 
                 try:
@@ -113,11 +127,17 @@ def cleanup_expired_sessions(app: Flask, sessions_dir: str, expire_seconds: int,
                         age = (now - created_at).total_seconds()
                         if age > expire_seconds:
                             shutil.rmtree(session_path)
-                            current_app.logger.info(f"Deleted expired session: {session_id} (age: {age:.0f}s)")
+                            current_app.logger.info(
+                                f"Deleted expired session: {session_id} (age: {age:.0f}s)"
+                            )
                     else:
-                        current_app.logger.warning(f"Could not find 'created_at' in info.txt for session: {session_id}. Skipping cleanup")
+                        current_app.logger.warning(
+                            f"Could not find 'created_at' in info.txt for session: {session_id}. Skipping cleanup"
+                        )
 
                 except Exception as e:
-                    current_app.logger.error(f"Failed to check/delete session {session_id}: {e}")
+                    current_app.logger.error(
+                        f"Failed to check/delete session {session_id}: {e}"
+                    )
 
             time.sleep(cleanup_interval)

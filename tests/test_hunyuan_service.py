@@ -1,12 +1,13 @@
-import pytest
 import os
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 
 from hunyuan_service import (
+    _process_image_filepaths,
+    call_hunyuan_shape_generation_api,
     get_hunyuan_client,
     save_generated_model,
-    _process_image_filepaths,
-    call_hunyuan_shape_generation_api
 )
 
 
@@ -68,7 +69,9 @@ def test_save_generated_model_success(mock_file_open, mock_makedirs):
     sessions_dir = "test_sessions"
     base_url = "http://test-base.com"
 
-    file_path, model_url = save_generated_model(session_id, model_data, filename, sessions_dir, base_url)
+    file_path, model_url = save_generated_model(
+        session_id, model_data, filename, sessions_dir, base_url
+    )
 
     expected_dir = os.path.join(sessions_dir, session_id, "models")
     expected_file_path = os.path.join(expected_dir, filename)
@@ -87,7 +90,9 @@ def test_save_generated_model_success(mock_file_open, mock_makedirs):
 def test_save_generated_model_file_write_error(mock_open_fail, mock_makedirs):
     """Test error handling during file writing"""
     with pytest.raises(IOError, match="Could not save model file"):
-        save_generated_model("test_session", b"data", "file.glb", "test_sessions", "http://test-base.com")
+        save_generated_model(
+            "test_session", b"data", "file.glb", "test_sessions", "http://test-base.com"
+        )
     mock_makedirs.assert_called_once()
 
 
@@ -150,10 +155,10 @@ def test_process_image_filepaths_multiple_images(mock_handle_file):
 
     assert "mv_image_back" in result_args
     assert result_args["mv_image_back"] is mock_mv_back
-    
+
     assert "mv_image_left" in result_args
     assert result_args["mv_image_left"] is mock_mv_left
-    
+
     assert result_args.get("mv_image_right") is None
 
     assert mock_handle_file.call_count == 4
@@ -165,13 +170,17 @@ def test_process_image_filepaths_multiple_images(mock_handle_file):
 
 def test_process_image_filepaths_no_images():
     """Test error when no image file paths are provided"""
-    with pytest.raises(ValueError, match="No image file paths provided for Hunyuan API call"):
+    with pytest.raises(
+        ValueError, match="No image file paths provided for Hunyuan API call"
+    ):
         _process_image_filepaths({}, {}, [])
 
 
 def test_process_image_filepaths_no_front_image():
     """Test error when front image is missing."""
-    with pytest.raises(ValueError, match="Front image is required but not provided in image_filepaths"):
+    with pytest.raises(
+        ValueError, match="Front image is required but not provided in image_filepaths"
+    ):
         _process_image_filepaths({"back": "/path/to/back.png"}, {}, ["front", "back"])
 
 
@@ -180,11 +189,15 @@ def test_process_image_filepaths_no_front_image():
 @patch("hunyuan_service.handle_file")
 @patch("hunyuan_service.os.path.exists", return_value=True)
 @patch("builtins.open", new_callable=mock_open, read_data=b"mock model content")
-def test_call_hunyuan_api_success(mock_file_open, mock_os_path_exists, mock_handle_file, mock_get_client):
+def test_call_hunyuan_api_success(
+    mock_file_open, mock_os_path_exists, mock_handle_file, mock_get_client
+):
     """Test successful API call and model return"""
     mock_client_instance = MagicMock()
     mock_get_client.return_value = mock_client_instance
-    mock_client_instance.predict.return_value = [{"value": "/tmp/mock_generated_model.glb"}]
+    mock_client_instance.predict.return_value = [
+        {"value": "/tmp/mock_generated_model.glb"}
+    ]
 
     mock_handle_file.return_value = MagicMock(name="file_handle")
 
@@ -209,7 +222,7 @@ def test_call_hunyuan_api_success(mock_file_open, mock_os_path_exists, mock_hand
         mv_image_back=None,
         mv_image_left=None,
         mv_image_right=None,
-        api_name=hunyuan_api_name
+        api_name=hunyuan_api_name,
     )
     mock_handle_file.assert_called_once_with("/path/to/front.png")
     mock_file_open.assert_called_once_with("/tmp/mock_generated_model.glb", "rb")
@@ -218,17 +231,27 @@ def test_call_hunyuan_api_success(mock_file_open, mock_os_path_exists, mock_hand
 @patch("hunyuan_service.get_hunyuan_client")
 @patch("hunyuan_service.handle_file")
 @patch("hunyuan_service.os.path.exists", return_value=False)
-def test_call_hunyuan_api_no_model_file(mock_os_path_exists, mock_handle_file, mock_get_client):
+def test_call_hunyuan_api_no_model_file(
+    mock_os_path_exists, mock_handle_file, mock_get_client
+):
     """Test error when API returns a path but file doesn't exist"""
     mock_client_instance = MagicMock()
     mock_get_client.return_value = mock_client_instance
-    mock_client_instance.predict.return_value = [{"value": "/tmp/non_existent_model.glb"}]
+    mock_client_instance.predict.return_value = [
+        {"value": "/tmp/non_existent_model.glb"}
+    ]
 
     mock_handle_file.return_value = MagicMock(name="file_handle")
 
-    with pytest.raises(RuntimeError, match="Hunyuan API call failed or returned invalid model path"):
+    with pytest.raises(
+        RuntimeError, match="Hunyuan API call failed or returned invalid model path"
+    ):
         call_hunyuan_shape_generation_api(
-            {"front": "/path/to/front.png"}, "caption", "test_space", "test_api", ["front"]
+            {"front": "/path/to/front.png"},
+            "caption",
+            "test_space",
+            "test_api",
+            ["front"],
         )
     mock_get_client.assert_called_once_with("test_space")
     mock_client_instance.predict.assert_called_once()
@@ -240,7 +263,11 @@ def test_call_hunyuan_api_general_error(mock_get_client):
     """Test general exception during API call"""
     with pytest.raises(RuntimeError, match="Failed to generate shape via Hunyuan API"):
         call_hunyuan_shape_generation_api(
-            {"front": "/path/to/front.png"}, "caption", "test_space", "test_api", ["front"]
+            {"front": "/path/to/front.png"},
+            "caption",
+            "test_space",
+            "test_api",
+            ["front"],
         )
     mock_get_client.assert_called_once_with("test_space")
 

@@ -1,6 +1,6 @@
-import os
 import logging
-from typing import Dict, Tuple, Optional
+import os
+from typing import Dict, Optional, Tuple
 
 from gradio_client import Client, handle_file
 
@@ -34,11 +34,15 @@ def get_hunyuan_client(hunyuan_space_id: str) -> Client:
             logger.error("HUNYUAN_SPACE_ID is not provided")
             raise RuntimeError("HUNYUAN_SPACE_ID is not provided")
         try:
-            logger.info(f"INFO: Initialising Gradio Client for space ID: {hunyuan_space_id}")
+            logger.info(
+                f"INFO: Initialising Gradio Client for space ID: {hunyuan_space_id}"
+            )
             _hunyuan_client = Client(hunyuan_space_id)
         except Exception as e:
             _hunyuan_client = None
-            logger.error(f"ERROR: Failed to initialise Gradio Client for space ID {hunyuan_space_id}: {e}")
+            logger.error(
+                f"ERROR: Failed to initialise Gradio Client for space ID {hunyuan_space_id}: {e}"
+            )
             raise RuntimeError(f"Failed to initialise Gradio Client: {e}") from e
 
     return _hunyuan_client
@@ -46,11 +50,7 @@ def get_hunyuan_client(hunyuan_space_id: str) -> Client:
 
 # Model handling
 def save_generated_model(
-    session_id: str,
-    model_data: bytes,
-    filename: str,
-    sessions_dir: str,
-    base_url: str
+    session_id: str, model_data: bytes, filename: str, sessions_dir: str, base_url: str
 ) -> Tuple[str, str]:
     """
     Saves the generated model binary data to the specified session directory
@@ -87,9 +87,7 @@ def save_generated_model(
 
 # Hunyuan API interaction
 def _process_image_filepaths(
-    image_filepaths: Dict[str, str], 
-    predict_args: Dict,
-    allowed_views: list
+    image_filepaths: Dict[str, str], predict_args: Dict, allowed_views: list
 ) -> Dict:
     """
     Prepares image file paths for the Gradio client's prediction
@@ -101,7 +99,7 @@ def _process_image_filepaths(
 
     Returns:
         Dict: Updated prediction arguments
-        
+
     Raises:
         ValueError: If no image file paths provided or front image is missing
     """
@@ -115,7 +113,9 @@ def _process_image_filepaths(
     predict_args["image"] = handle_file(front_image_path)
 
     if len(image_filepaths) == 1:
-        logger.info(f"INFO: Passing single image '{os.path.basename(front_image_path)}' to 'image' argument for Hunyuan API")
+        logger.info(
+            f"INFO: Passing single image '{os.path.basename(front_image_path)}' to 'image' argument for Hunyuan API"
+        )
         return predict_args
 
     logger.info(f"INFO: Passing {len(image_filepaths)} images to multi-view arguments")
@@ -132,7 +132,7 @@ def call_hunyuan_shape_generation_api(
     caption: str | None,
     hunyuan_space_id: str,
     hunyuan_api_name: str,
-    allowed_views: list
+    allowed_views: list,
 ) -> Tuple[bytes, str]:
     """
     Calls the Hunyuan shape generation API to process images and generate a 3D model
@@ -143,10 +143,10 @@ def call_hunyuan_shape_generation_api(
         hunyuan_space_id (str): Hunyuan space identifier
         hunyuan_api_name (str): Name of the API endpoint to call
         allowed_views (list): List of allowed view names
-        
+
     Returns:
         Tuple[bytes, str]: Binary model data and filename
-        
+
     Raises:
         RuntimeError: If API name not provided or API call fails
         ValueError: If input validation fails
@@ -155,7 +155,7 @@ def call_hunyuan_shape_generation_api(
         raise RuntimeError("HUNYUAN_API_NAME is not provided")
 
     try:
-        client = get_hunyuan_client(hunyuan_space_id) # Pass space_id to client factory
+        client = get_hunyuan_client(hunyuan_space_id)  # Pass space_id to client factory
 
         predict_args: Dict = {
             "caption": caption,
@@ -164,24 +164,32 @@ def call_hunyuan_shape_generation_api(
             "mv_image_back": None,
             "mv_image_left": None,
             "mv_image_right": None,
-            "api_name": hunyuan_api_name
+            "api_name": hunyuan_api_name,
         }
 
-        predict_args = _process_image_filepaths(image_filepaths, predict_args, allowed_views)
+        predict_args = _process_image_filepaths(
+            image_filepaths, predict_args, allowed_views
+        )
 
-        logger.info(f"INFO: Calling Hunyuan API '{hunyuan_api_name}' with images: {list(image_filepaths.keys())}")
+        logger.info(
+            f"INFO: Calling Hunyuan API '{hunyuan_api_name}' with images: {list(image_filepaths.keys())}"
+        )
         result = client.predict(**predict_args)
 
         generated_model_filepath = result[0]["value"]
 
         if not generated_model_filepath or not os.path.exists(generated_model_filepath):
-            raise RuntimeError(f"Hunyuan API call failed or returned invalid model path: {generated_model_filepath}")
+            raise RuntimeError(
+                f"Hunyuan API call failed or returned invalid model path: {generated_model_filepath}"
+            )
 
         with open(generated_model_filepath, "rb") as f:
             model_binary_data = f.read()
 
         model_filename = os.path.basename(generated_model_filepath)
-        logger.info(f"INFO: Successfully received model '{model_filename}' from Hunyuan API")
+        logger.info(
+            f"INFO: Successfully received model '{model_filename}' from Hunyuan API"
+        )
         return model_binary_data, model_filename
 
     except ValueError as ve:

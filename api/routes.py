@@ -1,11 +1,17 @@
 import os
 import uuid
+from datetime import datetime, timezone
 
-from flask import jsonify, request, current_app, send_from_directory
+from flask import current_app, jsonify, request, send_from_directory
+
+from hunyuan_service import call_hunyuan_shape_generation_api, save_generated_model
+from utils.session_helpers import (
+    _create_session_directories,
+    _save_and_get_image_paths,
+    _write_session_info,
+)
 
 from . import api_bp
-from hunyuan_service import call_hunyuan_shape_generation_api, save_generated_model
-from utils.session_helpers import _create_session_directories, _write_session_info, _save_and_get_image_paths
 
 
 @api_bp.route("/generate_session_id", methods=["GET"])
@@ -24,7 +30,9 @@ def generate_session_id():
         _write_session_info(session_path, session_id)
         return jsonify({"session_id": session_id}), 200
     except Exception as e:
-        current_app.logger.error(f"Failed to generate session ID or create directories: {e}")
+        current_app.logger.error(
+            f"Failed to generate session ID or create directories: {e}"
+        )
         return jsonify({"error": "Failed to create session"}), 500
 
 
@@ -40,14 +48,19 @@ def process_image(session_id: str):
         JSON: A dictionary containing model information (`filename`, `model_url`) and a success message, or an error message
     """
     caption = request.form.get("caption")
-    current_app.logger.info(f"Received request for session {session_id}. Caption: '{caption or 'N/A'}'")
+    current_app.logger.info(
+        f"Received request for session {session_id}. Caption: '{caption or 'N/A'}'"
+    )
 
     session_base_dir = os.path.join(current_app.config["SESSIONS_DIR"], session_id)
     if not os.path.exists(session_base_dir):
         current_app.logger.warning(f"Session ID not found: {session_id}")
         return jsonify({"error": "Session ID not found"}), 404
 
-    if "front_image" not in request.files or request.files["front_image"].filename == "":
+    if (
+        "front_image" not in request.files
+        or request.files["front_image"].filename == ""
+    ):
         return jsonify({"error": "The 'front_image' is required"}), 400
 
     image_paths = _save_and_get_image_paths(session_id, request.files)
@@ -62,25 +75,37 @@ def process_image(session_id: str):
             caption=caption,
             hunyuan_space_id=current_app.config["HUNYUAN_SPACE_ID"],
             hunyuan_api_name=current_app.config["HUNYUAN_API_NAME"],
-            allowed_views=current_app.config["ALLOWED_VIEWS"]
+            allowed_views=current_app.config["ALLOWED_VIEWS"],
         )
 
         file_path, model_public_url = save_generated_model(
-            session_id, model_binary_data, model_filename,
+            session_id,
+            model_binary_data,
+            model_filename,
             sessions_dir=current_app.config["SESSIONS_DIR"],
-            base_url=current_app.config["APP_BASE_URL"]
+            base_url=current_app.config["APP_BASE_URL"],
         )
 
-        return jsonify({
-            "message": "Image processed and model generated successfully",
-            "session_id": session_id,
-            "filename": os.path.basename(file_path),
-            "model_url": model_public_url
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": "Image processed and model generated successfully",
+                    "session_id": session_id,
+                    "filename": os.path.basename(file_path),
+                    "model_url": model_public_url,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
-        current_app.logger.error(f"Failed processing image for session {session_id}: {e}")
-        return jsonify({"error": "An internal error occurred while processing the image"}), 500
+        current_app.logger.error(
+            f"Failed processing image for session {session_id}: {e}"
+        )
+        return (
+            jsonify({"error": "An internal error occurred while processing the image"}),
+            500,
+        )
 
 
 @api_bp.route("/session_models/<string:session_id>", methods=["GET"])
@@ -100,17 +125,20 @@ def get_session_models(session_id: str):
 
     if not os.path.exists(session_models_dir):
         current_app.logger.warning(f"Session model directory not found: {session_id}")
-        return jsonify({"error": "Session ID not found or models directory missing"}), 404
+        return (
+            jsonify({"error": "Session ID not found or models directory missing"}),
+            404,
+        )
 
     try:
         models = os.listdir(session_models_dir)
-        return jsonify({
-            "session_id": session_id,
-            "models": models
-        }), 200
+        return jsonify({"session_id": session_id, "models": models}), 200
     except Exception as e:
         current_app.logger.error(f"Failed to list models for session {session_id}: {e}")
-        return jsonify({"error": "An internal error occurred while retrieving models"}), 500
+        return (
+            jsonify({"error": "An internal error occurred while retrieving models"}),
+            500,
+        )
 
 
 @api_bp.route("/sessions/<path:filename>", methods=["GET"])
@@ -134,10 +162,12 @@ def serve_sessions(filename: str):
     try:
         return send_from_directory(sessions_dir, filename)
     except Exception as e:
-        current_app.logger.error(f"Error serving file {filename} from {sessions_dir}: {e}")
+        current_app.logger.error(
+            f"Error serving file {filename} from {sessions_dir}: {e}"
+        )
         return "File not found or access denied", 404
-    
 
-@api_bp.route('/health', methods=["GET"])
+
+@api_bp.route("/health", methods=["GET"])
 def health_check():
-    return {'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
