@@ -19,19 +19,19 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 Create a `.env` file in the project root with the following variables:
 
 ```
+FLASK_ENV=development
+CORS_ORIGINS=http://localhost:4200
+APP_BASE_URL=http://localhost:5000
+
 HUNYUAN_SPACE_ID=
 HUNYUAN_API_NAME=
-SESSIONS_DIR=./sessions
 
-SESSION_EXPIRE_SLEEP_TIME=300 #5mins
-SESSION_EXPIRE_REMOVE_TIME=3600 #1 hour
 ```
-
+- `FLASK_ENV`: The environment mode in which the Flask app runs.
+- `CORS_ORIGINS`: The allowed origins for CORS.
+- `APP_BASE_URL`: The base URL where the Flask application is hosted.
 - `HUNYUAN_SPACE_ID`: Your Hunyuan3D HuggingFace Space ID.
 - `HUNYUAN_API_NAME`: The API name for Hunyuan3D.
-- `SESSIONS_DIR`: Directory to store session data (default: `./sessions`).
-- `SESSION_EXPIRE_SLEEP_TIME`: Interval (in seconds) between session cleanup checks (default: `300`).
-- `SESSION_EXPIRE_REMOVE_TIME`: Session expiration time (in seconds)(default: `3600`).
 
 ## Installation
 1. Clone the repository:

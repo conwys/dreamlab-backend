@@ -16,12 +16,24 @@ def create_app(config_class=Config):
     """
     load_dotenv()  # Load .env variables when app is created (e.g., for local dev)
 
+    env = app.config.get("FLASK_ENV")
+
+    if env == "production":
+        config_class = ProductionConfig
+    elif env == "testing":
+        config_class = TestingConfig
+    else:
+        config_class = DevelopmentConfig
+
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    CORS(app, origins=["http://localhost:4200"]) # TODO
+    cors_origins = app.config.get("CORS_ORIGINS")
 
-    logging.basicConfig(level=logging.INFO)
+    CORS(app, origins=cors_origins) # is support credentials needed
+
+    logging.basicConfig(level=getattr(logging, app.config.get("LOG_LEVEL").upper()))
+    app.logger.info(f"App running in {app.config["ENV"]} environment with log level {app.config["LOG_LEVEL"]}")
 
     from api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
@@ -30,10 +42,11 @@ def create_app(config_class=Config):
 
 
 if __name__ == "__main__":
-    app_instance = create_app(DevelopmentConfig)
+    app_instance = create_app()
 
     if app_instance.config.get("SESSIONS_DIR"):
         os.makedirs(app_instance.config["SESSIONS_DIR"], exist_ok=True)
+        app_instance.logger.info(f"Session directory: {app_instance.config["SESSIONS_DIR"]}")
 
         cleanup_thread = threading.Thread(
             target=cleanup_expired_sessions,
@@ -50,4 +63,10 @@ if __name__ == "__main__":
     else:
         app_instance.logger.warning("SESSIONS_DIR is not configured. Session cleanup will not run")
 
-    app_instance.run(debug=app_instance.config["DEBUG"], host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app_instance.run(
+        debug=app_instance.config["DEBUG"],
+        host="0.0.0.0",
+        port=port,
+        load_dotenv=False
+    )
