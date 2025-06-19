@@ -6,14 +6,14 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
-from config import DevelopmentConfig, ProductionConfig, TestingConfig
+from config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 from utils.session_helpers import cleanup_expired_sessions
 
 
 app = None
 
 
-def create_app():
+def create_app(config_class=Config):
     """
     Creates and configures the Flask application instance
     """
