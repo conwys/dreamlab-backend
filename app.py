@@ -29,6 +29,7 @@ def create_app():
     app.config.from_object(config_class)
 
     cors_origins = app.config.get("CORS_ORIGINS")
+    print(f"INFO: CORS Origins: {cors_origins}")
 
     CORS(app, origins=cors_origins)  # is support credentials needed
 
