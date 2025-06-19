@@ -10,7 +10,7 @@ The DreamLab Backend is a Flask-based REST API designed to handle session manage
 - **Model Retrieval**: Retrieve a list of generated 3D models for a session.
 
 ## Prerequisites
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Flask
 - Gradio Client
 
