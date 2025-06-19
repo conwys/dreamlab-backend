@@ -1,10 +1,9 @@
 import logging
-import trimesh
 import os
 from typing import Dict, Optional, Tuple
 
+import trimesh
 from gradio_client import Client, handle_file
-
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -192,25 +191,21 @@ def call_hunyuan_shape_generation_api(
             f"INFO: Successfully received model '{model_filename}' from Hunyuan API"
         )
 
-        # Set model to grey color using trimesh
         try:
-            mesh = trimesh.load(generated_model_filepath, force='mesh')
-            if hasattr(mesh, 'visual') and hasattr(mesh.visual, 'vertex_colors'):
-                # Set all vertex colors to grey (e.g., RGB 120,120,120, alpha 255)
+            mesh = trimesh.load(generated_model_filepath, force="mesh")
+            if hasattr(mesh, "visual") and hasattr(mesh.visual, "vertex_colors"):
                 grey = [120, 120, 120, 255]
                 mesh.visual.vertex_colors = [grey] * len(mesh.vertices)
             else:
-                # If no vertex_colors, assign a grey material
-                mesh.visual = trimesh.visual.ColorVisuals(mesh, vertex_colors=[120,120,120,255])
-            # Save the modified mesh back to the same file
+                mesh.visual = trimesh.visual.ColorVisuals(
+                    mesh, vertex_colors=[120, 120, 120, 255]
+                )
             mesh.export(generated_model_filepath)
             logger.info(f"INFO: Set model '{model_filename}' to grey color")
-            # Reload the binary data after color modification
             with open(generated_model_filepath, "rb") as f:
                 model_binary_data = f.read()
         except Exception as color_exc:
             logger.error(f"ERROR: Failed to set model color to grey: {color_exc}")
-            # Proceed with original model_binary_data if coloring fails
 
         return model_binary_data, model_filename
 
