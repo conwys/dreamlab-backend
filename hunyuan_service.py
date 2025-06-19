@@ -2,8 +2,8 @@ import logging
 import os
 from typing import Dict, Optional, Tuple
 
+import trimesh
 from gradio_client import Client, handle_file
-
 
 # Logger
 logger = logging.getLogger(__name__)
@@ -190,6 +190,23 @@ def call_hunyuan_shape_generation_api(
         logger.info(
             f"INFO: Successfully received model '{model_filename}' from Hunyuan API"
         )
+
+        try:
+            mesh = trimesh.load(generated_model_filepath, force="mesh")
+            if hasattr(mesh, "visual") and hasattr(mesh.visual, "vertex_colors"):
+                grey = [120, 120, 120, 255]
+                mesh.visual.vertex_colors = [grey] * len(mesh.vertices)
+            else:
+                mesh.visual = trimesh.visual.ColorVisuals(
+                    mesh, vertex_colors=[120, 120, 120, 255]
+                )
+            mesh.export(generated_model_filepath)
+            logger.info(f"INFO: Set model '{model_filename}' to grey color")
+            with open(generated_model_filepath, "rb") as f:
+                model_binary_data = f.read()
+        except Exception as color_exc:
+            logger.error(f"ERROR: Failed to set model color to grey: {color_exc}")
+
         return model_binary_data, model_filename
 
     except ValueError as ve:
