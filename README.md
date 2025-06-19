@@ -30,7 +30,7 @@ HUNYUAN_API_NAME=
 - `HUNYUAN_SPACE_ID`: Your Hunyuan3D HuggingFace Space ID.
 - `HUNYUAN_API_NAME`: The API name for Hunyuan3D.
 
-## Installation
+## Run Local Development Environment
 
 1. Clone the repository:
 
@@ -39,14 +39,33 @@ git clone <repository-url>
 cd dreamlab-backend
 ```
 
-2. Create and activate a virtual environment:
+2. Create a virtual environment:
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+3. Activate the virtual environment
+
+On Mac/Unix:
+
+```bash
+source venv/bin/activate
+```
+
+On Windows (PowerShell)
+
+```bash
+venv\Scripts\activate
+```
+
+On Windows (Bash)
+
+```bash
+source venv/Scripts/activate
+```
+
+4. Install dependencies:
 
 ```bash
 pip install -r requirements/dev.txt

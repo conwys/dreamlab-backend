@@ -2,18 +2,17 @@ services:
   - type: web
     name: dreamlab-backend
     buildCommand: pip install -r requirements/prod.txt
-    startCommand: python app.py
+    startCommand: waitress-serve --port=$PORT app:app
     runtime: python
     envVars:
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: "https://dreamlabmku.netlify.app/"
+        value: "https://dreamlabmku.netlify.app"
       - key: APP_BASE_URL
         value: "https://dreamlab-backend-nov5.onrender.com"
       - key: SECRET_KEY
         generateValue: true
-        sync: false
       - key: HUNYUAN_SPACE_ID
         value: ${HUNYUAN_SPACE_ID}
       - key: HUNYUAN_API_NAME
