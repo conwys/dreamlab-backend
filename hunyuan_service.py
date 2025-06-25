@@ -70,11 +70,12 @@ def save_generated_model(
     """
     session_models_dir = os.path.join(sessions_dir, session_id, "models")
 
+    # Ensure the directory exists before trying to list its contents
+    os.makedirs(session_models_dir, exist_ok=True)
+    
     name, ext = os.path.splitext(filename)
     n = len(os.listdir(session_models_dir)) + 1
     model_filename = f"{name}_{n}{ext}"
-
-    os.makedirs(session_models_dir, exist_ok=True)
     file_path = os.path.join(session_models_dir, model_filename)
 
     try:

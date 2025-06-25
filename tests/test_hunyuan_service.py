@@ -59,9 +59,10 @@ def test_get_hunyuan_client_no_space_id():
 
 
 # Tests for save_generated_model
+@patch("os.listdir", return_value=[])
 @patch("os.makedirs")
 @patch("builtins.open", new_callable=mock_open)
-def test_save_generated_model_success(mock_file_open, mock_makedirs):
+def test_save_generated_model_success(mock_file_open, mock_makedirs, mock_listdir):
     """Test successful saving of a model"""
     session_id = "test_session_123"
     model_data = b"binary_model_content"
@@ -74,10 +75,11 @@ def test_save_generated_model_success(mock_file_open, mock_makedirs):
     )
 
     expected_dir = os.path.join(sessions_dir, session_id, "models")
-    expected_file_path = os.path.join(expected_dir, filename)
+    expected_file_path = os.path.join(expected_dir, "test_model_1.glb")
     expected_url = f"{base_url}/sessions/{session_id}/models/{filename}"
 
     mock_makedirs.assert_called_once_with(expected_dir, exist_ok=True)
+    mock_listdir.assert_called_once_with(expected_dir)
     mock_file_open.assert_called_once_with(expected_file_path, "wb")
     mock_file_open().write.assert_called_once_with(model_data)
 
@@ -85,15 +87,17 @@ def test_save_generated_model_success(mock_file_open, mock_makedirs):
     assert model_url == expected_url
 
 
+@patch("os.listdir", return_value=[])
 @patch("os.makedirs")
 @patch("builtins.open", side_effect=IOError("File write failed"))
-def test_save_generated_model_file_write_error(mock_open_fail, mock_makedirs):
+def test_save_generated_model_file_write_error(mock_open_fail, mock_makedirs, mock_listdir):
     """Test error handling during file writing"""
     with pytest.raises(IOError, match="Could not save model file"):
         save_generated_model(
             "test_session", b"data", "file.glb", "test_sessions", "http://test-base.com"
         )
     mock_makedirs.assert_called_once()
+    mock_listdir.assert_called_once()
 
 
 # Tests for _process_image_filepaths
