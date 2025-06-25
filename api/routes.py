@@ -168,6 +168,43 @@ def serve_sessions(filename: str):
         return "File not found or access denied", 404
 
 
+@api_bp.route("/delete_all_models/<string:session_id>", methods=["DELETE"])
+def delete_all_models(session_id: str):
+    """
+    Deletes all 3D model files and uploads for a specific session.
+
+    Args:
+        session_id (str): The unique identifier for the user session
+
+    Returns:
+        JSON: A success message or an error message
+    """
+    sessions_dir = current_app.config["SESSIONS_DIR"]
+    session_models_dir = os.path.join(sessions_dir, session_id, "models")
+    session_uploads_dir = os.path.join(sessions_dir, session_id, "uploads")
+
+    if not os.path.exists(session_models_dir) or not os.path.exists(session_uploads_dir):
+        current_app.logger.warning(f"Session directory not found: {session_id}")
+        return jsonify({"error": "Session ID not found or sub-directory missing"}), 404
+
+    try:
+        for filename in os.listdir(session_models_dir):
+            file_path = os.path.join(session_models_dir, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        for filename in os.listdir(session_uploads_dir):
+            file_path = os.path.join(session_uploads_dir, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        return jsonify({
+            "message": "All models deleted successfully",
+            "session_id": session_id
+        }), 200
+    except Exception as e:
+        current_app.logger.error(f"Failed to delete models for session {session_id}: {e}")
+        return jsonify({"error": "An internal error occurred while deleting models"}), 500
+
+
 @api_bp.route("/health", methods=["GET"])
 def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
