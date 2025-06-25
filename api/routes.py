@@ -171,7 +171,7 @@ def serve_sessions(filename: str):
 @api_bp.route("/delete_all_models/<string:session_id>", methods=["DELETE"])
 def delete_all_models(session_id: str):
     """
-    Deletes all 3D model files for a specific session.
+    Deletes all 3D model files and uploads for a specific session.
 
     Args:
         session_id (str): The unique identifier for the user session
