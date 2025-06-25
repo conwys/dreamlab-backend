@@ -70,8 +70,12 @@ def save_generated_model(
     """
     session_models_dir = os.path.join(sessions_dir, session_id, "models")
 
+    name, ext = os.path.splitext(filename)
+    n = len(os.listdir(session_models_dir)) + 1
+    model_filename = f"{name}_{n}{ext}"
+
     os.makedirs(session_models_dir, exist_ok=True)
-    file_path = os.path.join(session_models_dir, filename)
+    file_path = os.path.join(session_models_dir, model_filename)
 
     try:
         with open(file_path, "wb") as f:
